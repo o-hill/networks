@@ -92,6 +92,7 @@ class TwoDimensionalCNN(Network):
 
     def __init__(self, name = f'default_network_{ np.random.randint(10000) }',
                  save_location = '~/networks',
+                 new_model = True,
                  input_sizes = [128, 128, 3],
                  output_size = 32,
                  num_conv_layers = 4,
@@ -107,20 +108,27 @@ class TwoDimensionalCNN(Network):
                  optimizer = keras.optimizers.Adam(lr = 0.001)
     ):
 
-        layer_list = self.create(locals())
+        model = None
 
-        model = keras.models.Sequential(layer_list)
-        model.compile(
-            loss = loss_function,
-            optimizer = optimizer,
-            metrics = ['accuracy']
-        )
+        if new_model:
+            layer_list = self.create(locals())
+            model = keras.models.Sequential(layer_list)
+
+            model.compile(
+                loss = loss_function,
+                optimizer = optimizer,
+                metrics = ['accuracy']
+            )
 
         Network.__init__(self, name, save_location, model = model)
+
+        if not new_model:
+            self._load()
 
 
 
     def create(self, hparams):
+        '''Build the network layers.'''
 
         # Start building the layer list.
         layer_list = [ keras.layers.Conv2D(
@@ -176,6 +184,11 @@ class TwoDimensionalCNN(Network):
 
         # All done!
         return layer_list
+
+
+    def save(self):
+        '''Save the model to disk.'''
+        self._save()
 
 
 

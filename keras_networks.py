@@ -86,6 +86,21 @@ class Network:
             raise RuntimeError(f'> {self.name} has not been loaded from disk yet, and cannot be saved')
 
 
+    def _train(self, X: np.array = None, y: np.array = None, epochs: int = 10):
+        '''Performs stochastic gradient descent on the given data.'''
+        self.model.fit(x=X, y=y)
+
+
+    def _evaluate(self, X: np.array = None, y: np.array = None):
+        '''Evaluate the models progress.'''
+        return self.model.evaluate(X, y)
+
+
+    def _predict(self, X: np.array = None):
+        '''Generate prediction for the model with the given data.'''
+        return self.model.predict(X)
+
+
 
 class TwoDimensionalCNN(Network):
     '''Generic 2D CNN model.'''
@@ -191,7 +206,66 @@ class TwoDimensionalCNN(Network):
         self._save()
 
 
+    def train(self, X: np.array = None, y: np.array = None, epochs: int = 10, validation_percent: float = 0.0, required_accuracy: float = 0.95):
+        '''
+            Train the model using stochastic gradient descent.
+
+            Important: this function does everything for you,
+            just supply the full amount of training data.
+
+        '''
+
+        accuracy = 0
+        iteration = 0
+        validation_set = [ ]
+        training_set = [ ]
+        validation_indices = np.random.randint(X.shape[0], size=(int(X.shape[0] * validation_percent)))
+
+        print(f'> {self.name} generating validation and training sets.')
+        validation_indices = np.random.randint(X.shape[0])
+        training_indices = list(set(range(X.shape[0])) - set(validation_indices))
+
+        X_validation = X[validation_indices]
+        y_validation = y[validation_indices]
+
+        X_training = X[training_indices]
+        y_training = y[training_indices]
+
+        print(f'> {self.name} beginning training.')
+        while accuracy < required_accuracy:
+            self._train(X_training, y_training, epochs=epochs)
+
+            accuracy = self._evaluate(X_validation, y_validation)
+            print(f'> {self.name} at iteration {iteration} evaluated at an accuracy of {accuracy}%.')
+
+            if iteration % 10 == 0:
+                print(f'> {self.name} saving to disk at iteration {iteration}')
+                self._save()
+
+        print(f'> {self.name} training complete! Saving...')
+        self._save()
+
+
+    def evaluate(self, X: np.array = None, y: np.array = None):
+        '''Evaluate the current model.'''
+        self._evaluate(X, y)
+
+
+    def predict(self, X: np.array = None):
+        '''Get predictions from the model.'''
+        return self._predict(X)
+
+
+
 
 if __name__ == '__main__':
     cnn = TwoDimensionalCNN()
+
+
+
+
+
+
+
+
 
